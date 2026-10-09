@@ -13,14 +13,14 @@ const machines = [
 {id:'PC-10',zone:'Lab A',status:'critical',cpu:68,ram:54,procs:190}
 ];
 const processes = [
-{pid:2840,name:'python.exe',cpu:62.4,ram:'1,245 MB',user:'user1',risk:'High CPU'},
-{pid:4120,name:'chrome.exe',cpu:12.8,ram:'856 MB',user:'user1',risk:''},
-{pid:5524,name:'code.exe',cpu:5.2,ram:'420 MB',user:'user1',risk:''},
-{pid:6632,name:'unity.exe',cpu:4.8,ram:'1,120 MB',user:'user1',risk:''},
-{pid:7716,name:'discord.exe',cpu:3.1,ram:'320 MB',user:'user1',risk:''},
-{pid:9020,name:'steam.exe',cpu:1.6,ram:'210 MB',user:'user1',risk:'Blacklisted'},
-{pid:1044,name:'notepad.exe',cpu:1.2,ram:'48 MB',user:'user1',risk:''},
-{pid:2210,name:'explorer.exe',cpu:.8,ram:'180 MB',user:'user1',risk:''}
+{pid:2840,name:'python.exe',machineId:'PC-03',cpu:62.4,ram:'1,245 MB',ramMb:1245,user:'user1',risk:'High CPU'},
+{pid:4120,name:'chrome.exe',machineId:'PC-03',cpu:12.8,ram:'856 MB',ramMb:856,user:'user1',risk:''},
+{pid:5524,name:'code.exe',machineId:'PC-03',cpu:5.2,ram:'420 MB',ramMb:420,user:'user1',risk:''},
+{pid:6632,name:'unity.exe',machineId:'PC-03',cpu:4.8,ram:'1,120 MB',ramMb:1120,user:'user1',risk:''},
+{pid:7716,name:'discord.exe',machineId:'PC-03',cpu:3.1,ram:'320 MB',ramMb:320,user:'user1',risk:''},
+{pid:9020,name:'steam.exe',machineId:'PC-10',cpu:1.6,ram:'210 MB',ramMb:210,user:'user1',risk:'Blacklisted'},
+{pid:1044,name:'notepad.exe',machineId:'PC-03',cpu:1.2,ram:'48 MB',ramMb:48,user:'user1',risk:''},
+{pid:2210,name:'explorer.exe',machineId:'PC-03',cpu:.8,ram:'180 MB',ramMb:180,user:'user1',risk:''}
 ];
 const alerts = [
 {level:'high',icon:'cpu',title:'CPU threshold exceeded',desc:'PC-03 is running at 96% CPU usage.',time:'Just now',machine:'PC-03'},
@@ -39,12 +39,17 @@ const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 function showToast(message){const t=$('#toast');t.textContent=message;t.classList.add('show');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('show'),2600);}
 function renderIcons(root=document){if(window.lucide&&typeof window.lucide.createIcons==='function')window.lucide.createIcons({root,attrs:{'stroke-width':1.9}});}
 function renderStats(){
+const online=machines.filter(m=>m.status!=='offline');
+const avgCpu=Math.round(online.reduce((n,m)=>n+(m.cpu||0),0)/Math.max(1,online.length));
+const avgRam=Math.round(online.reduce((n,m)=>n+(m.ram||0),0)/Math.max(1,online.length));
+const activeCount=machines.reduce((n,m)=>n+(m.procs||0),0);
+const highCount=alerts.filter(a=>a.level==='high').length,mediumCount=alerts.filter(a=>a.level==='medium').length;
 const items=[
-{label:'Total endpoints',value:'16',foot:'<b>12 online</b> · 2 offline',icon:'monitor',tone:'blue',bar:75},
-{label:'Average CPU',value:'28%',foot:'<span class="good">↓ 12%</span> vs. last period',icon:'cpu',tone:'',bar:28},
-{label:'Average memory',value:'42%',foot:'<span class="good">↓ 8%</span> vs. last period',icon:'memory-stick',tone:'purple',bar:42},
-{label:'Active processes',value:'1,842',foot:'Across connected endpoints',icon:'workflow',tone:'green',bar:68},
-{label:'Alerts today',value:'7',foot:'<span class="bad">3 high</span> · 4 medium',icon:'shield-alert',tone:'red',bar:48}
+{label:'Total endpoints',value:'16',foot:'<b>'+online.length+' reporting</b> · demo inventory',icon:'monitor',tone:'blue',bar:75},
+{label:'Average CPU',value:avgCpu+'%',foot:'Live demo simulation average',icon:'cpu',tone:'',bar:avgCpu},
+{label:'Average memory',value:avgRam+'%',foot:'Live demo simulation average',icon:'memory-stick',tone:'purple',bar:avgRam},
+{label:'Active processes',value:activeCount.toLocaleString(),foot:'Process count across sample fleet',icon:'workflow',tone:'green',bar:Math.min(100,activeCount/20)},
+{label:'Alerts today',value:String(alerts.length+3),foot:'<span class="bad">'+highCount+' high</span> · '+mediumCount+' medium active',icon:'shield-alert',tone:'red',bar:Math.min(100,alerts.length*10)}
 ];
 $('#statsGrid').innerHTML=items.map(x=>'<article class="stat-card"><div class="stat-top"><div class="stat-icon '+x.tone+'"><i data-lucide="'+x.icon+'"></i></div><div><div class="stat-label">'+x.label+'</div><div class="stat-value">'+x.value+'</div></div></div><div class="stat-foot">'+x.foot+'</div><div class="mini-track"><span style="width:'+x.bar+'%"></span></div></article>').join('');renderIcons($('#statsGrid'));
 }
@@ -83,23 +88,45 @@ $('#chartUpdated').textContent='Updated '+new Date().toLocaleTimeString([],{hour
 renderIcons($('.trend-panel'));
 }
 function pushDemoReading(){
-const lastCpu=chartHistory.cpu.at(-1),lastMem=chartHistory.memory.at(-1);
-chartHistory.cpu.push(Math.max(8,Math.min(96,Math.round(lastCpu+(Math.random()*12-6)))));
-chartHistory.memory.push(Math.max(20,Math.min(92,Math.round(lastMem+(Math.random()*6-3)))));
+const fleet=machines.filter(m=>m.status!=='offline');
+const avgCpu=fleet.reduce((n,m)=>n+(m.cpu||0),0)/Math.max(1,fleet.length),avgRam=fleet.reduce((n,m)=>n+(m.ram||0),0)/Math.max(1,fleet.length);
+chartHistory.cpu.push(Math.max(0,Math.min(100,Math.round(avgCpu+(Math.random()*4-2)))));
+chartHistory.memory.push(Math.max(0,Math.min(100,Math.round(avgRam+(Math.random()*3-1.5)))));
 if(chartHistory.cpu.length>60)chartHistory.cpu.shift();if(chartHistory.memory.length>60)chartHistory.memory.shift();
 if(resourceChart){renderChart();$('#lastSync').textContent='just now';}
 }
 function openMachine(id){
 selectedMachine=id;const m=machines.find(x=>x.id===id);if(!m)return;
 $('#modalTitle').textContent=id+' · Process explorer';
-const rows=id==='PC-03'?processes:processes.slice(0,5).map((p,i)=>({...p,cpu:Math.max(.4,p.cpu/2-i)}));
+const rows=processes.filter(p=>p.machineId===id);
 $('#modalBody').innerHTML='<div class="modal-machine-metrics"><div class="modal-metric"><small>CPU usage</small><strong style="color:'+(m.cpu>=90?'var(--red)':'var(--text)')+'">'+(m.cpu===null?'—':m.cpu+'%')+'</strong></div><div class="modal-metric"><small>Memory usage</small><strong>'+(m.ram===null?'—':m.ram+'%')+'</strong></div><div class="modal-metric"><small>Running processes</small><strong>'+m.procs+'</strong></div></div><div class="panel-heading"><div><h2>Running processes</h2><p>Sample process data · '+id+'</p></div><div class="inline-search" style="max-width:170px"><span>⌕</span><input id="processSearch" placeholder="Search process…"></div></div><div class="table-scroll"><table class="process-table"><thead><tr><th>PID</th><th>PROCESS</th><th>CPU</th><th>MEMORY</th><th>POLICY</th><th>ACTION</th></tr></thead><tbody id="processRows">'+rows.map(p=>processRow(p)).join('')+'</tbody></table></div><p style="font-size:9px;color:var(--muted);margin-top:13px">Demo mode: termination actions are simulated and do not affect your computer.</p>';
 $('#processModal').hidden=false;renderIcons($('#modalBody'));
 $('#processSearch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();$('#processRows').innerHTML=rows.filter(p=>(p.name+' '+p.pid).toLowerCase().includes(q)).map(processRow).join('')||'<tr><td colspan="6">No matching processes.</td></tr>';wireKillButtons();});
 wireKillButtons();
 }
 function processRow(p){return '<tr><td>'+p.pid+'</td><td class="process-name">'+esc(p.name)+'</td><td style="color:'+(p.cpu>50?'var(--red)':'var(--text)')+'">'+p.cpu+'%</td><td>'+p.ram+'</td><td>'+(p.risk?'<span class="severity '+(p.risk==='High CPU'?'high':'medium')+'">'+p.risk+'</span>':'<span style="color:var(--muted)">—</span>')+'</td><td><button class="kill-button" data-kill="'+p.pid+'" data-name="'+esc(p.name)+'">Terminate</button></td></tr>';}
-function wireKillButtons(){$$('[data-kill]').forEach(btn=>btn.addEventListener('click',()=>{const name=btn.dataset.name;const pid=btn.dataset.kill;if(confirm('Demo action only: simulate terminating '+name+' (PID '+pid+') on '+selectedMachine+'?'))showToast('Demo response queued for '+name+' · PID '+pid+'. No process was terminated.');}));}
+function wireKillButtons(){$$('[data-kill]').forEach(btn=>btn.addEventListener('click',()=>simulateTermination(Number(btn.dataset.kill))));}
+function applyProcessGridFilter(){if(processGridApi&&processGridApi.setGridOption)processGridApi.setGridOption('quickFilterText',processQuery);}
+function applyProcessGridSort(){if(!processGridApi||!processGridApi.applyColumnState)return;const field=processSort==='ram'?'ramSort':processSort==='name'?'name':'cpu';processGridApi.applyColumnState({defaultState:{sort:null},state:[{colId:field,sort:'desc'}]});}
+function simulateTermination(pid){
+ const idx=processes.findIndex(p=>p.pid===Number(pid));if(idx<0)return showToast('Process is no longer running in this demo.');
+ const proc=processes[idx],machine=machines.find(m=>m.id===proc.machineId);if(!machine)return showToast('No endpoint is associated with this sample process.');
+ if(!confirm('Simulate terminating '+proc.name+' (PID '+proc.pid+') on '+machine.id+'? This only changes demo data; no real process is touched.'))return;
+ const cpuBefore=Number(machine.cpu)||0,ramBefore=Number(machine.ram)||0;
+ const cpuReleased=Math.min(cpuBefore,Number(proc.cpu)||0),ramReleased=Math.min(ramBefore,Math.round((Number(proc.ramMb)||0)/8192*100*10)/10);
+ processes.splice(idx,1);machine.cpu=Math.max(0,Math.round((cpuBefore-cpuReleased)*10)/10);machine.ram=Math.max(0,Math.round((ramBefore-ramReleased)*10)/10);machine.procs=Math.max(0,(machine.procs||0)-1);
+ const threshold=pageState?.settings||{cpuWarn:75,cpuCritical:90,ramWarn:85};
+ machine.status=machine.cpu>=threshold.cpuCritical?'critical':machine.ram>=threshold.ramWarn?'warning':'online';
+ const audit={time:new Date().toLocaleTimeString(),pid:proc.pid,name:proc.name,endpoint:machine.id,cpuReleased:Math.round(cpuReleased*10)/10,ramReleased:Math.round(ramReleased*10)/10};terminationAudit.unshift(audit);
+ const risk=proc.risk==='Blacklisted';alerts.unshift({level:risk?'high':'medium',icon:risk?'shield-ban':'activity',title:risk?'Blacklisted process terminated (demo)':'Process termination simulated',desc:proc.name+' (PID '+proc.pid+') removed from '+machine.id+'. CPU −'+audit.cpuReleased+' points; memory −'+audit.ramReleased+' points.',time:'Just now',machine:machine.id});
+ activities.unshift({color:risk?'amber':'green',title:'Demo termination: '+proc.name+' on '+machine.id,meta:'PID '+proc.pid+' · CPU −'+audit.cpuReleased+' · RAM −'+audit.ramReleased+' points',time:audit.time});
+ const fleet=machines.filter(m=>m.status!=='offline');const avgCpu=Math.round(fleet.reduce((n,m)=>n+(m.cpu||0),0)/Math.max(1,fleet.length));const avgRam=Math.round(fleet.reduce((n,m)=>n+(m.ram||0),0)/Math.max(1,fleet.length));
+ chartHistory.cpu.push(avgCpu);chartHistory.memory.push(avgRam);if(chartHistory.cpu.length>60)chartHistory.cpu.shift();if(chartHistory.memory.length>60)chartHistory.memory.shift();
+ renderStats();renderMachines();renderAlerts();if(resourceChart)renderChart();
+ if($('#processModal')&&!$('#processModal').hidden&&selectedMachine===machine.id)openMachine(machine.id);
+ if(activeView==='processes'){const mount=$('#dedicatedView');if(mount)renderDedicatedView('processes',mount);}
+ showToast('Demo termination complete · '+machine.id+' CPU '+cpuBefore+'% → '+machine.cpu+'% · memory '+ramBefore+'% → '+machine.ram+'%.');
+}
 const pageState={
  blacklist:[
   {type:'Process name',value:'steam.exe',reason:'Unapproved gaming software',scope:'All endpoints',status:'Active'},
@@ -112,6 +139,7 @@ const pageState={
  settings:{cpuWarn:75,cpuCritical:90,ramWarn:85,refresh:5,notifyHigh:true,notifyOffline:true,autoRefresh:true}
 };
 let processQuery='',processSort='cpu',alertFilter='all',reportRange='24h',blacklistFilter='all';
+let processGridApi=null;const terminationAudit=[];
 function setView(view){
  activeView=view;
  $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
@@ -135,11 +163,24 @@ function renderDedicatedView(view,mount){
   $('#pageMachineFilter').value=filter;$('#pageMachineFilter').addEventListener('change',e=>{filter=e.target.value;renderDedicatedView('machines',mount);});
   $$('[data-inspect]',mount).forEach(b=>b.onclick=()=>openMachine(b.dataset.inspect));
  }else if(view==='processes'){
-  const list=processes.filter(p=>(p.name+' '+p.pid+' '+p.user+' '+(p.risk||'')).toLowerCase().includes(processQuery.toLowerCase())).sort((a,b)=>processSort==='name'?a.name.localeCompare(b.name):processSort==='ram'?parseFloat(b.ram)-parseFloat(a.ram):b.cpu-a.cpu);
-  mount.innerHTML='<div class="page-kpi-grid">'+[['Processes sampled','1,426','workflow'],['High resource','1','cpu'],['Policy matches',processes.filter(p=>p.risk==='Blacklisted').length,'shield-alert'],['Endpoints sampled','10','monitor']].map(x=>'<article class="stat-card"><div class="stat-top"><div class="stat-icon blue"><i data-lucide="'+x[2]+'"></i></div><div><div class="stat-label">'+x[0]+'</div><div class="stat-value">'+x[1]+'</div></div></div><div class="stat-foot">Synthetic process snapshot</div></article>').join('')+'</div>'+pagePanel('Running processes','Sample process inventory. Termination is simulated only.','<div class="page-toolbar"><div class="inline-search"><span><i data-lucide="search"></i></span><input id="pageProcessSearch" value="'+esc(processQuery)+'" placeholder="Search process, PID or user"></div><select id="processSort" class="page-select"><option value="cpu">Sort: CPU usage</option><option value="ram">Sort: memory</option><option value="name">Sort: name</option></select><span class="demo-inline"><i data-lucide="info"></i> DEMO DATA</span></div><div class="table-scroll"><table class="generic-table"><thead><tr><th>PROCESS / PID</th><th>ENDPOINT</th><th>USER</th><th>CPU</th><th>MEMORY</th><th>RISK / POLICY</th><th>ACTION</th></tr></thead><tbody>'+list.map((p,i)=>'<tr><td><strong>'+esc(p.name)+'</strong><small class="cell-sub">PID '+p.pid+'</small></td><td>'+(p.name==='steam.exe'?'PC-10':i%2?'PC-02':'PC-03')+'</td><td>'+p.user+'</td><td><span class="'+(p.cpu>50?'text-danger':'')+'">'+p.cpu+'%</span></td><td>'+p.ram+'</td><td>'+(p.risk?'<span class="severity '+(p.risk==='High CPU'?'high':'medium')+'">'+p.risk+'</span>':'<span class="muted-note">No match</span>')+'</td><td><button class="kill-button" data-page-kill="'+p.pid+'" data-name="'+esc(p.name)+'">Terminate</button></td></tr>').join('')+'</tbody></table></div><p class="page-footnote"><i data-lucide="shield-check"></i> No action is sent to a real operating system in this prototype.</p>');
-  $('#pageProcessSearch').addEventListener('input',e=>{processQuery=e.target.value;renderDedicatedView('processes',mount);});
-  $('#processSort').value=processSort;$('#processSort').addEventListener('change',e=>{processSort=e.target.value;renderDedicatedView('processes',mount);});
-  $$('[data-page-kill]',mount).forEach(b=>b.onclick=()=>{if(confirm('Simulate terminating '+b.dataset.name+' (PID '+b.dataset.pageKill+')? No real process will be terminated.'))showToast('Demo only: action logged for '+b.dataset.name+'.');});
+  window.__processGrid?.destroy?.();window.__processGrid=null;processGridApi=null;
+  const online=machines.filter(m=>m.status!=='offline');
+  const avgCpu=Math.round(online.reduce((n,m)=>n+(m.cpu||0),0)/Math.max(1,online.length));
+  const avgRam=Math.round(online.reduce((n,m)=>n+(m.ram||0),0)/Math.max(1,online.length));
+  mount.innerHTML='<div class="page-kpi-grid">'+[['Visible processes',processes.length,'workflow'],['Avg. endpoint CPU',avgCpu+'%','cpu'],['Avg. endpoint memory',avgRam+'%','memory-stick'],['Released resource events',terminationAudit.length,'activity']].map(x=>'<article class="stat-card"><div class="stat-top"><div class="stat-icon blue"><i data-lucide="'+x[2]+'"></i></div><div><div class="stat-label">'+x[0]+'</div><div class="stat-value">'+x[1]+'</div></div></div><div class="stat-foot">Shared demo simulation state</div></article>').join('')+'</div>'+pagePanel('Process explorer','Sortable, filterable AG Grid table. Termination updates endpoint metrics and the dashboard.','<div class="page-toolbar"><div class="inline-search"><span><i data-lucide="search"></i></span><input id="pageProcessSearch" value="'+esc(processQuery)+'" placeholder="Search name, PID, user or endpoint"></div><select id="processSort" class="page-select"><option value="cpu">Sort: CPU usage</option><option value="ram">Sort: memory</option><option value="name">Sort: process name</option></select><span class="demo-inline"><i data-lucide="activity"></i> SIMULATED TELEMETRY</span></div><div class="process-resource-strip"><div><small>Available CPU capacity</small><strong id="freeCpu">'+(100-avgCpu)+'%</strong><span>fleet average headroom</span></div><div><small>Available memory</small><strong id="freeMemory">'+(100-avgRam)+'%</strong><span>fleet average headroom</span></div><div><small>Termination audit</small><strong id="auditCount">'+terminationAudit.length+'</strong><span>simulated actions recorded</span></div></div><div id="processAgGrid" class="ag-theme-quartz netos-ag-grid"></div><p class="page-footnote"><i data-lucide="shield-check"></i> Demo only: no operating-system process is terminated. Resource values are illustrative and reset on page reload.</p>');
+  const rows=processes.map(p=>({...p,endpoint:p.machineId,ramSort:p.ramMb||parseInt(String(p.ram).replace(/[^0-9]/g,''),10)||0,policy:p.risk||'None'}));
+  const gridOptions={theme:'legacy',rowData:rows,defaultColDef:{sortable:true,filter:true,resizable:true,flex:1,minWidth:100,tooltipValueGetter:params=>String(params.value??'')},pagination:true,paginationPageSize:8,animateRows:true,domLayout:'normal',rowHeight:48,headerHeight:42,overlayNoRowsTemplate:'<span class="muted-note">No processes match this search.</span>',columnDefs:[
+   {headerName:'PROCESS',field:'name',minWidth:155,flex:1.4,cellRenderer:params=>{const el=document.createElement('div');el.className='ag-process-cell';el.innerHTML='<span class="ag-process-glyph"><i data-lucide="cpu"></i></span><span><strong>'+esc(params.value)+'</strong><small>PID '+params.data.pid+'</small></span>';return el;}},
+   {headerName:'ENDPOINT',field:'endpoint',minWidth:105},
+   {headerName:'USER',field:'user',minWidth:90},
+   {headerName:'CPU',field:'cpu',minWidth:100,filter:'agNumberColumnFilter',valueFormatter:p=>Number(p.value).toFixed(1)+'%',cellClassRules:{'ag-resource-hot':p=>Number(p.value)>=50,'ag-resource-warn':p=>Number(p.value)>=20&&Number(p.value)<50}},
+   {headerName:'MEMORY',field:'ramSort',minWidth:120,filter:'agNumberColumnFilter',valueFormatter:p=>Number(p.value).toLocaleString()+' MB'},
+   {headerName:'POLICY',field:'policy',minWidth:120,cellRenderer:p=>{const el=document.createElement('span');if(p.value==='None'){el.className='muted-note';el.textContent='No match';}else{el.className='severity '+(p.value==='High CPU'?'high':'medium');el.textContent=p.value;}return el;}},
+   {headerName:'ACTION',field:'action',minWidth:115,maxWidth:125,sortable:false,filter:false,cellRenderer:()=>{const b=document.createElement('button');b.className='kill-button ag-terminate';b.type='button';b.textContent='Terminate';return b;}}
+  ],onCellClicked:params=>{if(params.colDef.field==='action')simulateTermination(params.data.pid);},onGridReady:params=>{processGridApi=params.api;applyProcessGridFilter();applyProcessGridSort();renderIcons(mount);}};
+  const gridEl=$('#processAgGrid',mount);if(window.agGrid&&window.agGrid.createGrid){processGridApi=null;window.__processGrid?.destroy?.();window.__processGrid=window.agGrid.createGrid(gridEl,gridOptions);}else gridEl.innerHTML='<div class="empty-state">AG Grid could not load. Check your network connection and reload.</div>';
+  $('#pageProcessSearch').addEventListener('input',e=>{processQuery=e.target.value;applyProcessGridFilter();});
+  $('#processSort').value=processSort;$('#processSort').addEventListener('change',e=>{processSort=e.target.value;applyProcessGridSort();});
  }else if(view==='alerts'){
   const filtered=alerts.filter((a,i)=>(alertFilter==='all'||a.level===alertFilter)&&!pageState.alertStatus[i]?.resolved);
   mount.innerHTML='<div class="page-kpi-grid">'+[['Open alerts',alerts.filter((a,i)=>!pageState.alertStatus[i]?.resolved).length,'bell-ring'],['High severity',alerts.filter(a=>a.level==='high').length,'shield-alert'],['Acknowledged',Object.values(pageState.alertStatus).filter(x=>x.ack).length,'check-check'],['Resolved',Object.values(pageState.alertStatus).filter(x=>x.resolved).length,'shield-check']].map(x=>'<article class="stat-card"><div class="stat-top"><div class="stat-icon '+(x[2]==='shield-alert'?'red':'blue')+'"><i data-lucide="'+x[2]+'"></i></div><div><div class="stat-label">'+x[0]+'</div><div class="stat-value">'+x[1]+'</div></div></div><div class="stat-foot">Local demo alert queue</div></article>').join('')+'</div>'+pagePanel('Investigation queue','Acknowledge events as you investigate; resolve them to remove them from the open queue.','<div class="page-toolbar"><select id="alertFilter" class="page-select"><option value="all">All severities</option><option value="high">High</option><option value="medium">Medium</option></select><span class="muted-note">'+filtered.length+' open event(s)</span><button class="btn btn-secondary" id="ackAllAlerts">Acknowledge all</button></div><div class="table-scroll"><table class="generic-table"><thead><tr><th>SEVERITY</th><th>EVENT</th><th>ENDPOINT</th><th>TIME</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>'+filtered.map(a=>{const i=alerts.indexOf(a),st=pageState.alertStatus[i]||{};return '<tr><td><span class="severity '+a.level+'">'+a.level.toUpperCase()+'</span></td><td><strong>'+a.title+'</strong><small class="cell-sub">'+a.desc+'</small></td><td>'+a.machine+'</td><td>'+a.time+'</td><td>'+(st.ack?'<span class="status-badge status-online">Acknowledged</span>':'<span class="status-badge status-warning">New</span>')+'</td><td><button class="text-button" data-ack="'+i+'">'+(st.ack?'Acknowledged':'Acknowledge')+'</button> <button class="text-button" data-resolve="'+i+'">Resolve</button></td></tr>';}).join('')+'</tbody></table></div>');
