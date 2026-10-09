@@ -53,10 +53,10 @@ function renderMachines(){
 let list=machines.filter(m=>(filter==='all'||(filter==='online'?m.status!=='offline':m.status==='critical'||m.status==='warning'))&& (m.id+' '+m.zone).toLowerCase().includes(searchTerm.toLowerCase()));
 if(activeView==='machines')list=machines.filter(m=>(filter==='all'||(filter==='online'?m.status!=='offline':m.status==='critical'||m.status==='warning'))&&(m.id+' '+m.zone).toLowerCase().includes(searchTerm.toLowerCase()));
 $('#machineGrid').classList.toggle('list-mode',listMode);
-$('#machineGrid').innerHTML=list.map(m=>{
+$('#machineGrid').innerHTML=list.map((m,index)=>{
 const cpu=m.cpu===null?'—':m.cpu+'%',ram=m.ram===null?'—':m.ram+'%';
 const cpuClass=m.cpu===null?'':m.cpu>=90?'cpu-hot':m.cpu>=65?'cpu-warn':'cpu-good';
-return '<article class="machine-card '+(m.status==='critical'?'critical':m.status==='warning'?'warning':m.status==='offline'?'offline':'')+'" data-machine="'+m.id+'" tabindex="0" role="button" aria-label="Inspect '+m.id+'"><div class="machine-head"><div class="pc-icon"><i data-lucide="monitor"></i></div><div class="machine-name"><strong>'+m.id+'</strong><small>'+m.zone+'</small></div>'+statusLabel(m)+'</div><div class="metric-row"><span>CPU</span><strong>'+cpu+'</strong><div class="metric-track"><span class="'+cpuClass+'" style="width:'+(m.cpu||0)+'%"></span></div></div><div class="metric-row"><span>RAM</span><strong>'+ram+'</strong><div class="metric-track"><span style="width:'+(m.ram||0)+'%;background:#3985f7"></span></div></div><div class="machine-foot"><span>'+(m.status==='offline'?'No telemetry':m.procs+' processes')+'</span><b>›</b></div></article>';
+return '<article class="machine-card '+(m.status==='critical'?'critical':m.status==='warning'?'warning':m.status==='offline'?'offline':'')+'" style="--card-index:'+Math.min(index,12)+'" data-machine="'+m.id+'" tabindex="0" role="button" aria-label="Inspect '+m.id+'"><div class="machine-head"><div class="pc-icon"><i data-lucide="monitor"></i></div><div class="machine-name"><strong>'+m.id+'</strong><small>'+m.zone+'</small></div>'+statusLabel(m)+'</div><div class="metric-row"><span>CPU</span><strong>'+cpu+'</strong><div class="metric-track"><span class="'+cpuClass+'" style="width:'+(m.cpu||0)+'%"></span></div></div><div class="metric-row"><span>RAM</span><strong>'+ram+'</strong><div class="metric-track"><span style="width:'+(m.ram||0)+'%;background:#3985f7"></span></div></div><div class="machine-foot"><span>'+(m.status==='offline'?'No telemetry':m.procs+' processes')+'</span><b>›</b></div></article>';
 }).join('')||'<div class="empty-state">No endpoints match your filters.</div>';
 renderIcons($('#machineGrid'));$('#machineCount').textContent='Showing '+list.length+' of '+(activeView==='machines'?16:10)+' endpoints';
 $$('.machine-card').forEach(card=>{card.addEventListener('click',()=>openMachine(card.dataset.machine));card.addEventListener('keydown',e=>{if(e.key==='Enter')openMachine(card.dataset.machine);});});
@@ -65,11 +65,29 @@ function renderAlerts(){
 $('#alertList').innerHTML=alerts.slice(0,3).map(a=>'<div class="alert-item"><div class="alert-symbol '+a.level+'"><i data-lucide="'+a.icon+'"></i></div><div class="alert-copy"><strong>'+a.title+'</strong><p>'+a.desc+'</p><div class="alert-meta"><small>'+a.time+'</small><span class="severity '+a.level+'">'+a.level.toUpperCase()+'</span></div></div></div>').join('');
 $('#activityList').innerHTML=activities.map(a=>'<div class="activity-row"><span class="activity-icon '+a.color+'"><i data-lucide="'+(a.color==='red'?'alert-triangle':a.color==='amber'?'shield-alert':a.color==='blue'?'wifi-off':'memory-stick')+'"></i></span><div class="activity-copy"><strong>'+a.title+'</strong><small>'+a.meta+'</small></div><span class="activity-time">'+a.time+'</span></div>').join('');renderIcons($('#alertList'));renderIcons($('#activityList'));
 }
+let resourceChart=null,chartRange=30,chartMetric='both';
+const chartHistory={cpu:[34,31,36,29,33,27,30,25,28,32,26,29,24,31,27,35,30,26,28,24,32,27,29,28],memory:[46,45,47,44,46,43,45,42,44,46,43,45,41,44,42,46,44,43,45,42,44,43,41,42]};
+function chartLabels(count){const now=new Date();return Array.from({length:count},(_,i)=>{const d=new Date(now.getTime()-(count-1-i)*(chartRange*60000/(count-1)));return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});});}
 function renderChart(){
-const a=[40,43,38,46,42,50,44,55,49,52,47,60,55,64,59,70,66,72,67,80,74,84,77,86,80,89,82,93,88,91,86,95];
-const b=[58,55,61,57,63,60,65,62,67,63,70,66,69,64,72,68,75,71,73,69,78,72,76,74,80,76,82,78,80,77,84,81];
-const path=v=>v.map((n,i)=>(i?'L':'M')+(i*440/(v.length-1)).toFixed(1)+' '+(132-n*1.22).toFixed(1)).join(' ');
-$('#cpuLine').setAttribute('d',path(a));$('#memLine').setAttribute('d',path(b));$('#cpuArea').setAttribute('d',path(a)+' L440 145 L0 145 Z');
+if(!window.Chart||!$('#trendChart'))return;
+const count=chartRange===15?8:chartRange===30?12:24;
+const cpu=chartHistory.cpu.slice(-count),memory=chartHistory.memory.slice(-count),labels=chartLabels(count),ctx=$('#trendChart').getContext('2d');
+const cpuFill=ctx.createLinearGradient(0,0,0,240);cpuFill.addColorStop(0,'rgba(52,120,246,.22)');cpuFill.addColorStop(1,'rgba(52,120,246,0)');
+const datasets=[{label:'CPU usage',data:cpu,borderColor:'#3478f6',backgroundColor:cpuFill,fill:true,tension:.38,cubicInterpolationMode:'monotone',borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHitRadius:12,pointHoverBackgroundColor:'#fff',pointHoverBorderWidth:3,pointHoverBorderColor:'#3478f6'},{label:'Memory usage',data:memory,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.04)',fill:false,tension:.38,cubicInterpolationMode:'monotone',borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHitRadius:12,pointHoverBackgroundColor:'#fff',pointHoverBorderWidth:3,pointHoverBorderColor:'#8b5cf6'}].filter(d=>chartMetric==='both'||(chartMetric==='cpu'&&d.label==='CPU usage')||(chartMetric==='memory'&&d.label==='Memory usage'));
+const options={responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},animation:{duration:650,easing:'easeOutQuart'},transitions:{active:{animation:{duration:180}}},plugins:{legend:{display:false},tooltip:{enabled:true,backgroundColor:'#10213d',titleColor:'#c9d9f4',bodyColor:'#fff',padding:12,cornerRadius:9,displayColors:true,boxPadding:4,usePointStyle:true,callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y+'%'}}},scales:{x:{grid:{display:false},border:{display:false},ticks:{color:'#95a3ba',maxTicksLimit:6,maxRotation:0,font:{size:9}}},y:{min:0,max:100,border:{display:false,dash:[3,4]},grid:{color:'rgba(139,157,184,.16)',drawTicks:false},ticks:{stepSize:25,color:'#95a3ba',padding:8,font:{size:9},callback:v=>v+'%'}}}};
+if(resourceChart){resourceChart.data.labels=labels;resourceChart.data.datasets=datasets;resourceChart.options=options;resourceChart.update();}
+else resourceChart=new Chart(ctx,{type:'line',data:{labels,datasets},options});
+$('#chartSubtitle').textContent='Fleet average · last '+(chartRange===60?'60 minutes':chartRange+' minutes');
+$('#chartCurrent').innerHTML=(chartMetric==='memory'?'Memory': 'CPU')+' '+(chartMetric==='memory'?memory[memory.length-1]:cpu[cpu.length-1])+'% <em>DEMO</em>';
+$('#chartUpdated').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+renderIcons($('.trend-panel'));
+}
+function pushDemoReading(){
+const lastCpu=chartHistory.cpu.at(-1),lastMem=chartHistory.memory.at(-1);
+chartHistory.cpu.push(Math.max(8,Math.min(96,Math.round(lastCpu+(Math.random()*12-6)))));
+chartHistory.memory.push(Math.max(20,Math.min(92,Math.round(lastMem+(Math.random()*6-3)))));
+if(chartHistory.cpu.length>60)chartHistory.cpu.shift();if(chartHistory.memory.length>60)chartHistory.memory.shift();
+if(resourceChart){renderChart();$('#lastSync').textContent='just now';}
 }
 function openMachine(id){
 selectedMachine=id;const m=machines.find(x=>x.id===id);if(!m)return;
@@ -119,11 +137,13 @@ $('#globalSearch').addEventListener('input',e=>{searchTerm=e.target.value;$('#ma
 $$('.filter-pill').forEach(b=>b.addEventListener('click',()=>{$$('.filter-pill').forEach(x=>x.classList.remove('active'));b.classList.add('active');filter=b.dataset.filter;renderMachines();}));
 $('#fleetMode').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;listMode=b.dataset.mode==='list';$$('#fleetMode button').forEach(x=>x.classList.toggle('selected',x===b));renderMachines();});
 $('#statusFilterBtn').addEventListener('click',()=>{filter=filter==='all'?'critical':'all';$$('.filter-pill').forEach(x=>x.classList.toggle('active',x.dataset.filter===filter));renderMachines();showToast(filter==='critical'?'Showing endpoints needing attention.':'Showing all endpoints.');});
-$('#refreshBtn').addEventListener('click',()=>{$('#lastSync').textContent='just now';renderStats();renderMachines();showToast('Demo data refreshed. No live agents connected.');});
+$('#refreshBtn').addEventListener('click',()=>{const b=$('#refreshBtn');b.classList.add('is-refreshing');$('#lastSync').textContent='just now';renderStats();renderMachines();pushDemoReading();setTimeout(()=>b.classList.remove('is-refreshing'),850);showToast('Demo telemetry refreshed. No live agents connected.');});
 $('#exportBtn').addEventListener('click',exportReport);
 $('#closeModal').addEventListener('click',()=>$('#processModal').hidden=true);
 $('#processModal').addEventListener('click',e=>{if(e.target.id==='processModal')$('#processModal').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#processModal').hidden=true;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch').focus();}});
-$('#themeToggle').addEventListener('click',()=>{document.body.classList.toggle('dark-mode');showToast(document.body.classList.contains('dark-mode')?'Dark theme enabled.':'Light theme enabled.');});
+$('#themeToggle').addEventListener('click',()=>{document.body.classList.toggle('dark-mode');showToast(document.body.classList.contains('dark-mode')?'Dark theme enabled.':'Light theme enabled.');if(resourceChart){resourceChart.options.scales.x.ticks.color=document.body.classList.contains('dark-mode')?'#9aacc6':'#95a3ba';resourceChart.options.scales.y.ticks.color=document.body.classList.contains('dark-mode')?'#9aacc6':'#95a3ba';resourceChart.options.scales.y.grid.color=document.body.classList.contains('dark-mode')?'rgba(154,172,198,.16)':'rgba(139,157,184,.16)';resourceChart.update('none');}});
+$('#chartRanges').addEventListener('click',e=>{const b=e.target.closest('[data-range]');if(!b)return;chartRange=Number(b.dataset.range);$$('#chartRanges button').forEach(x=>x.classList.toggle('selected',x===b));renderChart();showToast('Showing '+chartRange+' minutes of demo telemetry.');});
+$('#chartMetric').addEventListener('change',e=>{chartMetric=e.target.value;renderChart();});
 function tick(){const d=new Date();$('#clock').textContent=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-renderStats();renderMachines();renderAlerts();renderChart();renderIcons();tick();setInterval(tick,1000);
+renderStats();renderMachines();renderAlerts();renderChart();renderIcons();tick();setInterval(tick,1000);setInterval(pushDemoReading,5000);
