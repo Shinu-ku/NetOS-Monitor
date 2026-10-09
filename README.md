@@ -1,19 +1,52 @@
 # NetOS Monitor
 
-[![Deploy to Hatchable](https://hatchable.com/deploy-button.svg)](https://hatchable.com/deploy?repo=https://github.com/Shinu-ku/NetOS-Monitor)
+**A Lab CSOC Endpoint Monitoring Dashboard**
 
-Centralized Lab Security Operations Center for real-time endpoint telemetry, process monitoring, resource alerts, and authorized response across Windows and Linux lab computers.
+NetOS Monitor is a web-based security operations dashboard designed to demonstrate endpoint monitoring, system resource tracking, process management, and security alert handling through a clean, interactive interface.
 
-This folder is a complete Hatchable project. Everything the app needs is in these files: pages, API routes, database migrations, seed data, and the hatchable.toml manifest that declares the services and keys it uses.
+## Features
 
-## Run your own copy
+- **Dashboard:** Monitor CPU usage, memory utilization, endpoint health, and security alerts.
+- **Endpoint Management:** View endpoint inventory and inspect machine details.
+- **Process Monitoring:** Search, sort, filter, and paginate process records.
+- **Simulated Process Termination:** Test process-response workflows and observe changes in resource statistics.
+- **Security Alerts:** Filter alerts by severity and acknowledge or resolve them.
+- **Reports:** Review resource snapshots, endpoint health, and export reports as CSV.
+- **Blacklist Management:** Manage demo entries for process names, hashes, IP addresses, and domains.
+- **Settings:** Configure monitoring thresholds, refresh intervals, and notification preferences.
 
-1. Go to https://hatchable.com/deploy
-2. Bring this folder as a .zip, or point the importer at a Git repository that contains it
-3. Your copy gets its own database, its own URL, and connects to your own keys
+## Tech Stack
 
-## About Hatchable
+- HTML5, CSS3, JavaScript
+- Chart.js — resource monitoring charts
+- AG Grid Community — interactive process tables
+- Lucide Icons — interface icons
+- JavaScript API endpoint — health status
 
-Hatchable is where AI-built apps go live. Connect the AI you already use and it can build, deploy, and run apps like this one for you.
+## Project Structure
 
-Built on Hatchable. https://hatchable.com
+```text
+netos-monitor/
+├── public/
+│   ├── index.html
+│   ├── theme.css
+│   └── app.js
+└── api/
+    └── health.js
+```
+
+## Getting Started
+
+1. Clone or download this repository.
+2. Open `public/index.html` in a browser, or deploy the project to a compatible static hosting platform.
+3. Ensure internet access is available for the external charting, grid, and icon libraries.
+
+## Important Note
+
+**This is a demonstration project.** Endpoint information, resource readings, processes, and security events use simulated data. Process termination does not terminate real operating-system processes, and the dashboard is not connected to live endpoint agents.
+
+Do not use it as a production security monitoring system without implementing authenticated backend services, real endpoint telemetry, authorization, audit logging, and secure process-control mechanisms.
+
+## License
+
+No license has been specified yet. Add a `LICENSE` file before distributing the project under an open-source license.
