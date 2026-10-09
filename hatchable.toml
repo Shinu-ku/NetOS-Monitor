@@ -1,0 +1,5 @@
+# Hatchable project manifest. This file marks the folder as a
+# Hatchable project and declares the services it uses.
+# Reference: https://hatchable.com/docs/developers/config
+name = "NetOS Monitor"
+description = "Centralized Lab Security Operations Center for real-time endpoint telemetry, process monitoring, resource alerts, and authorized response across Windows and Linux lab computers."
