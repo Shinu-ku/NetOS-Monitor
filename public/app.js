@@ -23,10 +23,10 @@ const processes = [
 {pid:2210,name:'explorer.exe',cpu:.8,ram:'180 MB',user:'user1',risk:''}
 ];
 const alerts = [
-{level:'high',symbol:'!',title:'CPU threshold exceeded',desc:'PC-03 is running at 96% CPU usage.',time:'Just now',machine:'PC-03'},
-{level:'high',symbol:'⊘',title:'Blacklisted application detected',desc:'steam.exe detected on PC-10.',time:'2 min ago',machine:'PC-10'},
-{level:'medium',symbol:'↗',title:'Memory pressure warning',desc:'PC-04 memory usage reached 92%.',time:'5 min ago',machine:'PC-04'},
-{level:'medium',symbol:'⌁',title:'Unusual process activity',desc:'High CPU process requires review on PC-03.',time:'8 min ago',machine:'PC-03'}
+{level:'high',icon:'cpu',title:'CPU threshold exceeded',desc:'PC-03 is running at 96% CPU usage.',time:'Just now',machine:'PC-03'},
+{level:'high',icon:'shield-ban',title:'Blacklisted application detected',desc:'steam.exe detected on PC-10.',time:'2 min ago',machine:'PC-10'},
+{level:'medium',icon:'memory-stick',title:'Memory pressure warning',desc:'PC-04 memory usage reached 92%.',time:'5 min ago',machine:'PC-04'},
+{level:'medium',icon:'activity',title:'Unusual process activity',desc:'High CPU process requires review on PC-03.',time:'8 min ago',machine:'PC-03'}
 ];
 const activities = [
 {color:'red',title:'High CPU usage detected on PC-03',meta:'Rule: CPU > 90% · Threshold alert',time:'10:24'},
@@ -37,15 +37,16 @@ const activities = [
 let activeView='dashboard', filter='all', listMode=false, selectedMachine='PC-03', searchTerm='';
 const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function showToast(message){const t=$('#toast');t.textContent=message;t.classList.add('show');clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('show'),2600);}
+function renderIcons(root=document){if(window.lucide&&typeof window.lucide.createIcons==='function')window.lucide.createIcons({root,attrs:{'stroke-width':1.9}});}
 function renderStats(){
 const items=[
-{label:'Total endpoints',value:'16',foot:'<b>12 online</b> · 2 offline',icon:'▣',tone:'',bar:75},
-{label:'Average CPU',value:'28%',foot:'<span class="good">↓ 12%</span> vs. last period',icon:'⌁',tone:'',bar:28},
-{label:'Average memory',value:'42%',foot:'<span class="good">↓ 8%</span> vs. last period',icon:'▥',tone:'purple',bar:42},
-{label:'Active processes',value:'1,842',foot:'Across connected endpoints',icon:'⌘',tone:'green',bar:68},
-{label:'Alerts today',value:'7',foot:'<span class="bad">3 high</span> · 4 medium',icon:'♧',tone:'red',bar:48}
+{label:'Total endpoints',value:'16',foot:'<b>12 online</b> · 2 offline',icon:'monitor',tone:'blue',bar:75},
+{label:'Average CPU',value:'28%',foot:'<span class="good">↓ 12%</span> vs. last period',icon:'cpu',tone:'',bar:28},
+{label:'Average memory',value:'42%',foot:'<span class="good">↓ 8%</span> vs. last period',icon:'memory-stick',tone:'purple',bar:42},
+{label:'Active processes',value:'1,842',foot:'Across connected endpoints',icon:'workflow',tone:'green',bar:68},
+{label:'Alerts today',value:'7',foot:'<span class="bad">3 high</span> · 4 medium',icon:'shield-alert',tone:'red',bar:48}
 ];
-$('#statsGrid').innerHTML=items.map(x=>'<article class="stat-card"><div class="stat-top"><div class="stat-icon '+x.tone+'">'+x.icon+'</div><div><div class="stat-label">'+x.label+'</div><div class="stat-value">'+x.value+'</div></div></div><div class="stat-foot">'+x.foot+'</div><div class="mini-track"><span style="width:'+x.bar+'%"></span></div></article>').join('');
+$('#statsGrid').innerHTML=items.map(x=>'<article class="stat-card"><div class="stat-top"><div class="stat-icon '+x.tone+'"><i data-lucide="'+x.icon+'"></i></div><div><div class="stat-label">'+x.label+'</div><div class="stat-value">'+x.value+'</div></div></div><div class="stat-foot">'+x.foot+'</div><div class="mini-track"><span style="width:'+x.bar+'%"></span></div></article>').join('');renderIcons($('#statsGrid'));
 }
 function statusLabel(m){if(m.status==='critical')return '<span class="status-badge status-critical">High CPU</span>';if(m.status==='warning')return '<span class="status-badge status-warning">High memory</span>';if(m.status==='offline')return '<span class="status-badge status-offline">Offline</span>';return '<span class="status-badge status-online">Online</span>';}
 function renderMachines(){
@@ -55,14 +56,14 @@ $('#machineGrid').classList.toggle('list-mode',listMode);
 $('#machineGrid').innerHTML=list.map(m=>{
 const cpu=m.cpu===null?'—':m.cpu+'%',ram=m.ram===null?'—':m.ram+'%';
 const cpuClass=m.cpu===null?'':m.cpu>=90?'cpu-hot':m.cpu>=65?'cpu-warn':'cpu-good';
-return '<article class="machine-card '+(m.status==='critical'?'critical':m.status==='warning'?'warning':m.status==='offline'?'offline':'')+'" data-machine="'+m.id+'" tabindex="0" role="button" aria-label="Inspect '+m.id+'"><div class="machine-head"><div class="pc-icon">▣</div><div class="machine-name"><strong>'+m.id+'</strong><small>'+m.zone+'</small></div>'+statusLabel(m)+'</div><div class="metric-row"><span>CPU</span><strong>'+cpu+'</strong><div class="metric-track"><span class="'+cpuClass+'" style="width:'+(m.cpu||0)+'%"></span></div></div><div class="metric-row"><span>RAM</span><strong>'+ram+'</strong><div class="metric-track"><span style="width:'+(m.ram||0)+'%;background:#3985f7"></span></div></div><div class="machine-foot"><span>'+(m.status==='offline'?'No telemetry':m.procs+' processes')+'</span><b>›</b></div></article>';
+return '<article class="machine-card '+(m.status==='critical'?'critical':m.status==='warning'?'warning':m.status==='offline'?'offline':'')+'" data-machine="'+m.id+'" tabindex="0" role="button" aria-label="Inspect '+m.id+'"><div class="machine-head"><div class="pc-icon"><i data-lucide="monitor"></i></div><div class="machine-name"><strong>'+m.id+'</strong><small>'+m.zone+'</small></div>'+statusLabel(m)+'</div><div class="metric-row"><span>CPU</span><strong>'+cpu+'</strong><div class="metric-track"><span class="'+cpuClass+'" style="width:'+(m.cpu||0)+'%"></span></div></div><div class="metric-row"><span>RAM</span><strong>'+ram+'</strong><div class="metric-track"><span style="width:'+(m.ram||0)+'%;background:#3985f7"></span></div></div><div class="machine-foot"><span>'+(m.status==='offline'?'No telemetry':m.procs+' processes')+'</span><b>›</b></div></article>';
 }).join('')||'<div class="empty-state">No endpoints match your filters.</div>';
-$('#machineCount').textContent='Showing '+list.length+' of '+(activeView==='machines'?16:10)+' endpoints';
+renderIcons($('#machineGrid'));$('#machineCount').textContent='Showing '+list.length+' of '+(activeView==='machines'?16:10)+' endpoints';
 $$('.machine-card').forEach(card=>{card.addEventListener('click',()=>openMachine(card.dataset.machine));card.addEventListener('keydown',e=>{if(e.key==='Enter')openMachine(card.dataset.machine);});});
 }
 function renderAlerts(){
-$('#alertList').innerHTML=alerts.slice(0,3).map(a=>'<div class="alert-item"><div class="alert-symbol '+a.level+'">'+a.symbol+'</div><div class="alert-copy"><strong>'+a.title+'</strong><p>'+a.desc+'</p><div class="alert-meta"><small>'+a.time+'</small><span class="severity '+a.level+'">'+a.level.toUpperCase()+'</span></div></div></div>').join('');
-$('#activityList').innerHTML=activities.map(a=>'<div class="activity-row"><i class="activity-dot '+a.color+'"></i><div class="activity-copy"><strong>'+a.title+'</strong><small>'+a.meta+'</small></div><span class="activity-time">'+a.time+'</span></div>').join('');
+$('#alertList').innerHTML=alerts.slice(0,3).map(a=>'<div class="alert-item"><div class="alert-symbol '+a.level+'"><i data-lucide="'+a.icon+'"></i></div><div class="alert-copy"><strong>'+a.title+'</strong><p>'+a.desc+'</p><div class="alert-meta"><small>'+a.time+'</small><span class="severity '+a.level+'">'+a.level.toUpperCase()+'</span></div></div></div>').join('');
+$('#activityList').innerHTML=activities.map(a=>'<div class="activity-row"><span class="activity-icon '+a.color+'"><i data-lucide="'+(a.color==='red'?'alert-triangle':a.color==='amber'?'shield-alert':a.color==='blue'?'wifi-off':'memory-stick')+'"></i></span><div class="activity-copy"><strong>'+a.title+'</strong><small>'+a.meta+'</small></div><span class="activity-time">'+a.time+'</span></div>').join('');renderIcons($('#alertList'));renderIcons($('#activityList'));
 }
 function renderChart(){
 const a=[40,43,38,46,42,50,44,55,49,52,47,60,55,64,59,70,66,72,67,80,74,84,77,86,80,89,82,93,88,91,86,95];
@@ -75,7 +76,7 @@ selectedMachine=id;const m=machines.find(x=>x.id===id);if(!m)return;
 $('#modalTitle').textContent=id+' · Process explorer';
 const rows=id==='PC-03'?processes:processes.slice(0,5).map((p,i)=>({...p,cpu:Math.max(.4,p.cpu/2-i)}));
 $('#modalBody').innerHTML='<div class="modal-machine-metrics"><div class="modal-metric"><small>CPU usage</small><strong style="color:'+(m.cpu>=90?'var(--red)':'var(--text)')+'">'+(m.cpu===null?'—':m.cpu+'%')+'</strong></div><div class="modal-metric"><small>Memory usage</small><strong>'+(m.ram===null?'—':m.ram+'%')+'</strong></div><div class="modal-metric"><small>Running processes</small><strong>'+m.procs+'</strong></div></div><div class="panel-heading"><div><h2>Running processes</h2><p>Sample process data · '+id+'</p></div><div class="inline-search" style="max-width:170px"><span>⌕</span><input id="processSearch" placeholder="Search process…"></div></div><div class="table-scroll"><table class="process-table"><thead><tr><th>PID</th><th>PROCESS</th><th>CPU</th><th>MEMORY</th><th>POLICY</th><th>ACTION</th></tr></thead><tbody id="processRows">'+rows.map(p=>processRow(p)).join('')+'</tbody></table></div><p style="font-size:9px;color:var(--muted);margin-top:13px">Demo mode: termination actions are simulated and do not affect your computer.</p>';
-$('#processModal').hidden=false;
+$('#processModal').hidden=false;renderIcons($('#modalBody'));
 $('#processSearch').addEventListener('input',e=>{const q=e.target.value.toLowerCase();$('#processRows').innerHTML=rows.filter(p=>(p.name+' '+p.pid).toLowerCase().includes(q)).map(processRow).join('')||'<tr><td colspan="6">No matching processes.</td></tr>';wireKillButtons();});
 wireKillButtons();
 }
@@ -100,7 +101,7 @@ blacklist:['◉','Application policy','Manage blocked executable names and polic
 settings:['⚙','Monitoring preferences','Demo thresholds: CPU warning 75%, critical 90%, memory warning 85%.','<button class="btn btn-secondary" id="editThresholds">Review thresholds</button>']
 };
 const x=content[view]||content.reports;
-p.innerHTML='<div><div class="placeholder-icon">'+x[0]+'</div><h2>'+x[1]+'</h2><p>'+x[2]+'</p><div style="margin-top:18px;display:flex;justify-content:center">'+x[3]+'</div><p style="font-size:9px;margin-top:15px">This screen uses prototype data. Live endpoint integrations are the next development phase.</p></div>';
+p.innerHTML='<div><div class="placeholder-icon"><i data-lucide="'+({alerts:'shield-alert',reports:'chart-no-axes-combined',blacklist:'shield-ban',settings:'settings-2'}[view]||'layout-dashboard')+'"></i></div><h2>'+x[1]+'</h2><p>'+x[2]+'</p><div style="margin-top:18px;display:flex;justify-content:center">'+x[3]+'</div><p style="font-size:9px;margin-top:15px">This screen uses prototype data. Live endpoint integrations are the next development phase.</p></div>';renderIcons(p);
 if(view==='alerts')$('#ackAlerts').onclick=()=>showToast('Demo: visible alerts marked for review.');
 if(view==='reports')$('#exportReport').onclick=exportReport;
 if(view==='settings')$('#editThresholds').onclick=()=>showToast('Threshold editor will be connected to saved settings in the next phase.');
@@ -125,4 +126,4 @@ $('#processModal').addEventListener('click',e=>{if(e.target.id==='processModal')
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#processModal').hidden=true;if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch').focus();}});
 $('#themeToggle').addEventListener('click',()=>{document.body.classList.toggle('dark-mode');showToast(document.body.classList.contains('dark-mode')?'Dark theme enabled.':'Light theme enabled.');});
 function tick(){const d=new Date();$('#clock').textContent=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-renderStats();renderMachines();renderAlerts();renderChart();tick();setInterval(tick,1000);
+renderStats();renderMachines();renderAlerts();renderChart();renderIcons();tick();setInterval(tick,1000);
