@@ -4,6 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1730"><title>NetOS Monitor — Lab CSOC</title>
 <link rel="stylesheet" href="/theme.css">
+<script src="https://unpkg.com/lucide@latest"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -12,8 +13,8 @@
   <a class="brand" href="#" aria-label="NetOS Monitor home"><span class="brand-mark"><svg viewBox="0 0 32 36" fill="none"><path d="M16 2 29 7v10c0 8-5.5 13-13 17C8.5 30 3 25 3 17V7L16 2Z" stroke="currentColor" stroke-width="2.8"/><path d="m10 17 4 4 8-9" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>NetOS Monitor</strong><small>LAB CSOC</small></span></a>
   <div class="nav-label">WORKSPACE</div>
   <nav id="mainNav">
-    <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
-    <button class="nav-item" data-view="machines"><span class="nav-icon">▣</span>Machines <span class="nav-count">16</span></button>
+    <button class="nav-item active" data-view="dashboard"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</button>
+    <button class="nav-item" data-view="machines"><span class="nav-icon"><i data-lucide="monitor"></i></span>Machines <span class="nav-count">16</span></button>
     <button class="nav-item" data-view="processes"><span class="nav-icon">⌘</span>Processes</button>
     <button class="nav-item" data-view="alerts"><span class="nav-icon">♧</span>Alerts <span class="nav-count danger-count">7</span></button>
     <button class="nav-item" data-view="reports"><span class="nav-icon">▤</span>Reports</button>
@@ -43,5 +44,6 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 <div class="modal-backdrop" id="processModal" hidden><section class="modal"><div class="modal-head"><div><span class="modal-kicker">ENDPOINT INSPECTOR</span><h2 id="modalTitle">PC-03 · Process explorer</h2></div><button class="icon-button" id="closeModal" aria-label="Close">×</button></div><div id="modalBody"></div></section></div>
+<script src="https://unpkg.com/lucide@latest"></script>
 <script src="/app.js" defer></script>
 </body></html>
