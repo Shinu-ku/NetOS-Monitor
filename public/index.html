@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1730"><title>NetOS Monitor — Lab CSOC</title>
+<link rel="stylesheet" href="/theme.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar">
+  <a class="brand" href="#" aria-label="NetOS Monitor home"><span class="brand-mark"><svg viewBox="0 0 32 36" fill="none"><path d="M16 2 29 7v10c0 8-5.5 13-13 17C8.5 30 3 25 3 17V7L16 2Z" stroke="currentColor" stroke-width="2.8"/><path d="m10 17 4 4 8-9" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>NetOS Monitor</strong><small>LAB CSOC</small></span></a>
+  <div class="nav-label">WORKSPACE</div>
+  <nav id="mainNav">
+    <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+    <button class="nav-item" data-view="machines"><span class="nav-icon">▣</span>Machines <span class="nav-count">16</span></button>
+    <button class="nav-item" data-view="processes"><span class="nav-icon">⌘</span>Processes</button>
+    <button class="nav-item" data-view="alerts"><span class="nav-icon">♧</span>Alerts <span class="nav-count danger-count">7</span></button>
+    <button class="nav-item" data-view="reports"><span class="nav-icon">▤</span>Reports</button>
+  </nav>
+  <div class="nav-label nav-label-spaced">SECURITY</div>
+  <nav><button class="nav-item" data-view="blacklist"><span class="nav-icon">◉</span>Blacklist</button><button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Settings</button></nav>
+  <div class="sidebar-bottom"><div class="admin-avatar">A</div><div><strong>Lab Administrator</strong><small>Local workspace</small></div><span class="online-dot"></span></div>
+</aside>
+<main class="main-area">
+<header class="topbar"><div class="mobile-brand">◈ NetOS Monitor</div><label class="global-search"><span>⌕</span><input id="globalSearch" placeholder="Search machines, processes…" autocomplete="off"><kbd>⌘ K</kbd></label><div class="topbar-right"><span class="connection"><i></i><span>Demo environment</span></span><button class="icon-button" id="themeToggle" title="Toggle theme">◐</button><div class="top-date"><strong id="clock">10:24:08</strong><small>LOCAL SYSTEM TIME</small></div><div class="admin-avatar small-avatar">A</div></div></header>
+<div class="page-content">
+<div class="page-heading"><div><div class="eyebrow"><span class="live-pulse"></span> SYSTEM OVERVIEW <span class="eyebrow-divider">/</span> LAB A + B + C</div><h1 id="pageTitle">Command Center</h1><p id="pageSubtitle">A real-time view of your lab’s endpoint health and security posture.</p></div><div class="heading-actions"><button class="btn btn-secondary" id="exportBtn"><span>↧</span> Export report</button><button class="btn btn-primary" id="refreshBtn"><span>↻</span> Refresh data</button></div></div>
+<div class="demo-banner"><span class="demo-badge">DEMO</span><span>Sample telemetry is displayed. Connect endpoint agents to receive real machine data.</span><span class="banner-right">Last sync <strong id="lastSync">just now</strong></span></div>
+<section class="stats-grid" id="statsGrid"></section>
+<div class="dashboard-grid">
+<section class="panel fleet-panel"><div class="panel-heading"><div><h2>Endpoint fleet</h2><p>Machine health across all lab zones</p></div><div class="panel-actions"><div class="segmented" id="fleetMode"><button class="selected" data-mode="grid">▦</button><button data-mode="list">☷</button></div><button class="select-button" id="statusFilterBtn">All status⌄</button></div></div>
+<div class="filter-row"><div class="inline-search"><span>⌕</span><input id="machineSearch" placeholder="Filter endpoints…"></div><div class="filter-pills"><button class="filter-pill active" data-filter="all">All <b>16</b></button><button class="filter-pill" data-filter="online">Online <b>12</b></button><button class="filter-pill" data-filter="critical">Needs attention <b>3</b></button></div></div><div class="machine-grid" id="machineGrid"></div><div class="panel-footer"><span id="machineCount">Showing 10 of 16 endpoints</span><button class="text-button" data-view="machines">View all endpoints <span>→</span></button></div></section>
+<aside class="right-column">
+<section class="panel alert-panel"><div class="panel-heading"><div><h2>Priority alerts</h2><p>Events that need your attention</p></div><button class="more-button" data-view="alerts">•••</button></div><div id="alertList" class="alert-list"></div><button class="full-width-link" data-view="alerts">Open alert center <span>→</span></button></section>
+<section class="panel trend-panel"><div class="panel-heading"><div><h2>Resource trends</h2><p>Fleet average · last 30 minutes</p></div><span class="live-tag"><i></i> LIVE DEMO</span></div><div class="chart-legend"><span><i class="legend-blue"></i>CPU</span><span><i class="legend-purple"></i>Memory</span><strong>CPU 28% <em>↓ 12%</em></strong></div><div class="chart-wrap"><svg id="trendChart" viewBox="0 0 440 150" preserveAspectRatio="none" role="img" aria-label="Illustrative CPU and memory trend chart"><defs><linearGradient id="cpuFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3478f6" stop-opacity=".18"/><stop offset="1" stop-color="#3478f6" stop-opacity="0"/></linearGradient></defs><g class="chart-grid"><path d="M0 20H440M0 55H440M0 90H440M0 125H440"/></g><path id="cpuArea" d="" fill="url(#cpuFill)"/><path id="cpuLine" d="" fill="none" stroke="#3478f6" stroke-width="2.5" stroke-linecap="round"/><path id="memLine" d="" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5 5"/></svg></div><div class="chart-axis"><span>10:00</span><span>10:10</span><span>10:20</span><span>10:30</span></div></section>
+<section class="panel activity-panel"><div class="panel-heading"><div><h2>Recent activity</h2><p>Latest system events</p></div><button class="text-button" data-view="alerts">View all</button></div><div id="activityList" class="activity-list"></div></section>
+</aside>
+</div>
+<div class="bottom-note"><span class="shield-mini">◆</span> <strong>NetOS Monitor</strong><span>Endpoint intelligence for modern labs.</span><span class="version">Prototype v0.1</span></div>
+</div>
+</main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="modal-backdrop" id="processModal" hidden><section class="modal"><div class="modal-head"><div><span class="modal-kicker">ENDPOINT INSPECTOR</span><h2 id="modalTitle">PC-03 · Process explorer</h2></div><button class="icon-button" id="closeModal" aria-label="Close">×</button></div><div id="modalBody"></div></section></div>
+<script src="/app.js" defer></script>
+</body></html>
